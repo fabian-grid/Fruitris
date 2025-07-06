@@ -34,7 +34,8 @@ function randomFruit() {
 
 function spawnColumn() {
   currentColumn = [randomFruit(), randomFruit(), randomFruit()];
-  columnX = Math.floor(gridWidth / 2);
+  // spawn in a random column within the grid
+  columnX = Math.floor(Math.random() * gridWidth);
   // start just above the grid so the top fruit appears immediately
   columnY = -1;
   console.log('New column:', currentColumn.join(' '));
@@ -70,6 +71,58 @@ function canMoveDown() {
   return true;
 }
 
+function canMoveLeft() {
+  if (columnX - 1 < 0) return false;
+  for (let i = 0; i < 3; i++) {
+    const y = columnY + i;
+    if (y >= 0 && grid[y][columnX - 1]) return false;
+  }
+  return true;
+}
+
+function canMoveRight() {
+  if (columnX + 1 >= gridWidth) return false;
+  for (let i = 0; i < 3; i++) {
+    const y = columnY + i;
+    if (y >= 0 && grid[y][columnX + 1]) return false;
+  }
+  return true;
+}
+
+function rotateColumn() {
+  // bottom fruit moves to the top
+  const [top, middle, bottom] = currentColumn;
+  currentColumn = [bottom, top, middle];
+}
+
+function hardDrop() {
+  while (canMoveDown()) {
+    columnY++;
+  }
+  lockColumn();
+}
+
+function handleKey(e) {
+  if (!currentColumn) return;
+  switch (e.code) {
+    case 'ArrowLeft':
+      if (canMoveLeft()) columnX--;
+      break;
+    case 'ArrowRight':
+      if (canMoveRight()) columnX++;
+      break;
+    case 'ArrowDown':
+      hardDrop();
+      break;
+    case 'Space':
+      rotateColumn();
+      break;
+    default:
+      return;
+  }
+  renderGrid();
+}
+
 function lockColumn() {
   for (let i = 0; i < 3; i++) {
     const y = columnY + i;
@@ -97,4 +150,5 @@ function update(timestamp) {
 }
 
 spawnColumn();
+document.addEventListener('keydown', handleKey);
 requestAnimationFrame(update);
