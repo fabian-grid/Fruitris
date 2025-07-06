@@ -49,6 +49,8 @@ function spawnColumn() {
   columnX = Math.floor(Math.random() * gridWidth);
   // start just above the grid so the top fruit appears immediately
   columnY = -1;
+  // reset drop timer so new column begins falling immediately
+  lastDrop = performance.now();
   for (let i = 0; i < 3; i++) {
     const y = i;
     if (grid[y][columnX]) {
