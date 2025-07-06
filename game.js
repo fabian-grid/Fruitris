@@ -104,23 +104,29 @@ function hardDrop() {
 
 function handleKey(e) {
   if (!currentColumn) return;
+  let handled = false;
   switch (e.code) {
     case 'ArrowLeft':
       if (canMoveLeft()) columnX--;
+      handled = true;
       break;
     case 'ArrowRight':
       if (canMoveRight()) columnX++;
+      handled = true;
       break;
     case 'ArrowDown':
       hardDrop();
+      handled = true;
       break;
     case 'Space':
       rotateColumn();
+      handled = true;
       break;
-    default:
-      return;
   }
-  renderGrid();
+  if (handled) {
+    e.preventDefault();
+    renderGrid();
+  }
 }
 
 function lockColumn() {
