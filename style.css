@@ -18,6 +18,18 @@ body {
   font-size: 2rem;
 }
 
+#info {
+  margin-bottom: 8px;
+  font-size: 1.2rem;
+}
+
+#gameOver {
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  color: red;
+  display: none;
+}
+
 #grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));

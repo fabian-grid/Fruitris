@@ -1,5 +1,8 @@
 // DOM references
 const gridElement = document.getElementById('grid');
+const timeDisplay = document.getElementById('time');
+const scoreDisplay = document.getElementById('score');
+const gameOverDisplay = document.getElementById('gameOver');
 
 const gridWidth = 10;
 const gridHeight = 20;
@@ -18,16 +21,22 @@ for (let y = 0; y < gridHeight; y++) {
 // Create 2D grid array
 let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
 
-const fruitTypes = ['🍓', '🍌', '🍇', '🍍', '🍎', '🍒'];
+const fruitTypes = ['🍌', '🍏', '🍑', '🍒', '🫐', '🥥'];
 
 let currentColumn = null; // array of 3 fruits
 let columnX = 0;
 let columnY = 0; // top cell index of the falling column
 
 let isClearing = false; // flag while matches are being removed
-
 let lastDrop = 0;
-const dropInterval = 1000; // ms
+let startTime = null;
+let score = 0;
+let gameOver = false;
+
+const startInterval = 1000; // ms
+const minInterval = 100; // ms
+const curveK = 0.03;
+const curveMid = 420; // seconds
 
 function randomFruit() {
   const index = Math.floor(Math.random() * fruitTypes.length);
@@ -40,6 +49,14 @@ function spawnColumn() {
   columnX = Math.floor(Math.random() * gridWidth);
   // start just above the grid so the top fruit appears immediately
   columnY = -1;
+  for (let i = 0; i < 3; i++) {
+    const y = i;
+    if (grid[y][columnX]) {
+      endGame();
+      currentColumn = null;
+      return;
+    }
+  }
   console.log('New column:', currentColumn.join(' '));
 }
 
@@ -169,6 +186,30 @@ function applyGravity() {
   }
 }
 
+function updateScore() {
+  scoreDisplay.textContent = `Score: ${score}`;
+}
+
+function updateTime(elapsed) {
+  const minutes = Math.floor(elapsed / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = Math.floor(elapsed % 60)
+    .toString()
+    .padStart(2, '0');
+  timeDisplay.textContent = `${minutes}:${seconds}`;
+}
+
+function computeDropInterval(elapsed) {
+  const factor = 1 / (1 + Math.exp(-curveK * (elapsed - curveMid)));
+  return minInterval + (startInterval - minInterval) * (1 - factor);
+}
+
+function endGame() {
+  gameOver = true;
+  gameOverDisplay.style.display = 'block';
+}
+
 function processMatches() {
   const matches = findMatches();
   if (matches.length === 0) {
@@ -187,6 +228,8 @@ function processMatches() {
     matches.forEach(({ x, y }) => {
       grid[y][x] = null;
     });
+    score += matches.length;
+    updateScore();
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
@@ -239,21 +282,32 @@ function lockColumn() {
 }
 
 function update(timestamp) {
+  if (!startTime) startTime = timestamp;
+  if (gameOver) return;
+
+  const elapsed = (timestamp - startTime) / 1000;
+  updateTime(elapsed);
+
   if (!currentColumn && !isClearing) {
     spawnColumn();
   }
-  if (timestamp - lastDrop > dropInterval) {
-    if (canMoveDown()) {
+
+  const interval = computeDropInterval(elapsed);
+  if (timestamp - lastDrop > interval) {
+    if (currentColumn && canMoveDown()) {
       columnY++;
-    } else {
+    } else if (currentColumn) {
       lockColumn();
     }
     lastDrop = timestamp;
   }
+
   renderGrid();
   requestAnimationFrame(update);
 }
 
+updateScore();
+updateTime(0);
 spawnColumn();
 document.addEventListener('keydown', handleKey);
 requestAnimationFrame(update);
