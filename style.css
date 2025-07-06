@@ -5,6 +5,7 @@
 body {
   margin: 0;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
@@ -12,11 +13,16 @@ body {
   font-family: sans-serif;
 }
 
+#title {
+  margin-bottom: 16px;
+  font-size: 2rem;
+}
+
 #grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
   grid-template-rows: repeat(20, var(--cell-size));
-  gap: 2px;
+  gap: 0;
   background: #ddd;
   padding: 4px;
 }
@@ -25,7 +31,7 @@ body {
   width: var(--cell-size);
   height: var(--cell-size);
   background: #fff;
-  border: 1px solid #ccc;
+  border: none;
   display: flex;
   justify-content: center;
   align-items: center;
