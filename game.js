@@ -24,6 +24,8 @@ let currentColumn = null; // array of 3 fruits
 let columnX = 0;
 let columnY = 0; // top cell index of the falling column
 
+let isClearing = false; // flag while matches are being removed
+
 let lastDrop = 0;
 const dropInterval = 1000; // ms
 
@@ -95,6 +97,102 @@ function rotateColumn() {
   currentColumn = [bottom, top, middle];
 }
 
+function findMatches() {
+  const matches = new Set();
+  const dirs = [
+    [1, 0], // horizontal
+    [0, 1], // vertical
+    [1, 1], // diagonal down-right
+    [1, -1] // diagonal up-right
+  ];
+
+  for (let y = 0; y < gridHeight; y++) {
+    for (let x = 0; x < gridWidth; x++) {
+      const fruit = grid[y][x];
+      if (!fruit) continue;
+
+      for (const [dx, dy] of dirs) {
+        const prevX = x - dx;
+        const prevY = y - dy;
+        if (
+          prevX >= 0 &&
+          prevX < gridWidth &&
+          prevY >= 0 &&
+          prevY < gridHeight &&
+          grid[prevY][prevX] === fruit
+        ) {
+          continue; // not the start of a chain
+        }
+
+        let nx = x;
+        let ny = y;
+        const cells = [];
+        while (
+          nx >= 0 &&
+          nx < gridWidth &&
+          ny >= 0 &&
+          ny < gridHeight &&
+          grid[ny][nx] === fruit
+        ) {
+          cells.push(`${nx},${ny}`);
+          nx += dx;
+          ny += dy;
+        }
+
+        if (cells.length >= 3) {
+          cells.forEach(c => matches.add(c));
+        }
+      }
+    }
+  }
+
+  return Array.from(matches).map(str => {
+    const [x, y] = str.split(',').map(Number);
+    return { x, y };
+  });
+}
+
+function applyGravity() {
+  for (let x = 0; x < gridWidth; x++) {
+    for (let y = gridHeight - 1; y >= 0; y--) {
+      if (!grid[y][x]) {
+        let above = y - 1;
+        while (above >= 0 && !grid[above][x]) {
+          above--;
+        }
+        if (above >= 0) {
+          grid[y][x] = grid[above][x];
+          grid[above][x] = null;
+        }
+      }
+    }
+  }
+}
+
+function processMatches() {
+  const matches = findMatches();
+  if (matches.length === 0) {
+    isClearing = false;
+    return;
+  }
+
+  isClearing = true;
+  console.log('Match found:', matches.length, 'cells');
+  matches.forEach(({ x, y }) => {
+    grid[y][x] = '💥';
+  });
+  renderGrid();
+
+  setTimeout(() => {
+    matches.forEach(({ x, y }) => {
+      grid[y][x] = null;
+    });
+    applyGravity();
+    renderGrid();
+    setTimeout(processMatches, 200);
+  }, 200);
+}
+
 function hardDrop() {
   while (canMoveDown()) {
     columnY++;
@@ -137,10 +235,11 @@ function lockColumn() {
     }
   }
   currentColumn = null;
+  processMatches();
 }
 
 function update(timestamp) {
-  if (!currentColumn) {
+  if (!currentColumn && !isClearing) {
     spawnColumn();
   }
   if (timestamp - lastDrop > dropInterval) {
