@@ -45,3 +45,9 @@ No installation needed. Just open `index.html` in your browser.
 git clone https://github.com/<your-username>/fruitris.git
 cd fruitris
 open index.html
+```
+
+## 🌐 Play Online
+
+You can also play Fruitris on Gitbook Pages:
+[https://fruitris.gitbook.io/index.html](https://fruitris.gitbook.io/index.html)

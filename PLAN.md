@@ -8,9 +8,9 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 
 ## 🧱 Phase 1: Project Setup
 
-- [ ] Create `index.html`, `style.css`, and `game.js`
-- [ ] Define 10x20 grid structure using CSS Grid
-- [ ] Push initial files to GitHub
+- [x] Create `index.html`, `style.css`, and `game.js`
+- [x] Define 10x20 grid structure using CSS Grid
+- [x] Push initial files to GitHub
 
 —
 
@@ -18,29 +18,29 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 
 ### Falling Fruit Columns
 - [ ] Define difficulty level (speed of falling and number of fruit)
-- [ ] Define emoji set (`🍓`, `🍌`, `🍇`, `🍍`, `🍏`, `🍒`)
-- [ ] Generate 3-emoji vertical column at top of grid
-- [ ] Animate column falling over time
-- [ ] Allow movement: ← (left), → (right), ↓ (faster fall), ‘ ‘ (space; rotate fruit in column)
-- [ ] Implement collision detection and column lock-in
+- [x] Define emoji set (`🍓`, `🍌`, `🍇`, `🍍`, `🍏`, `🍒`)
+- [x] Generate 3-emoji vertical column at top of grid
+- [x] Animate column falling over time
+- [x] Allow movement: ← (left), → (right), ↓ (faster fall), ‘ ‘ (space; rotate fruit in column)
+- [x] Implement collision detection and column lock-in
 
 —
 
 ## 🔍 Phase 3: Match Detection
 
-- [ ] Represent grid state in a 2D array
-- [ ] Implement match-3 detection:
-  - [ ] Horizontal
-  - [ ] Vertical
-  - [ ] Diagonal (↖, ↘, ↗, ↙)
-- [ ] Mark and clear matched emojis
-- [ ] Add match animation or highlight
+- [x] Represent grid state in a 2D array
+- [x] Implement match-3 detection:
+  - [x] Horizontal
+  - [x] Vertical
+  - [x] Diagonal (↖, ↘, ↗, ↙)
+- [x] Mark and clear matched emojis
+- [x] Add match animation or highlight
 
 
 ## ⬇️ Phase 4: Gravity & Cascades
 
-- [ ] Apply gravity to fruits above cleared cells
-- [ ] Re-check for new matches (chain reactions)
+- [x] Apply gravity to fruits above cleared cells
+- [x] Re-check for new matches (chain reactions)
 - [ ] Add special power emoji (💣 = clear all emoji on screen below bomb; 🏹 = clear all emoji in column; 🗡️ clear all emoji in row)
 - [ ] Update score per emoji cleared and chain multiplier
 
@@ -48,8 +48,8 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 
 ## 🚨 Phase 5: Game Over & Restart
 
-- [ ] Detect when a new column cannot spawn
-- [ ] Show “Game Over” screen
+- [x] Detect when a new column cannot spawn
+- [x] Show “Game Over” screen
 - [ ] Add restart button or keyboard reset (e.g. `R` key)
 - [ ] Reset game state and score
 
@@ -59,7 +59,7 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 
 - [ ] Animate falling columns and clears
 - [ ] Add sound effects (optional: use `Tone.js`)
-- [ ] Add scoring UI
+- [x] Add scoring UI
 - [ ] Add pause/resume functionality
 - [ ] Handle mobile responsiveness and landscape mode
 - [ ] Final code cleanup and documentation
@@ -69,7 +69,7 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 ## 📤 Deployment
 
 - [ ] Ensure game runs via `index.html` in Safari
-- [ ] Optional: Host on GitHub Pages or similar
+- [x] Optional: Host on GitHub Pages or similar
 - [ ] Write release note for version `v1.0`
 
 —
