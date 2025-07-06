@@ -50,4 +50,4 @@ open index.html
 ## 🌐 Play Online
 
 You can also play Fruitris on Gitbook Pages:
-[https://fruitris.gitbook.io/index.html](https://fruitris.gitbook.io/index.html)
+[https://fabian-grid.gitbook.io/fruitris/index.html](https://fabian-grid.gitbook.io/fruitris/index.html)
