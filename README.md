@@ -28,7 +28,7 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 ## 🕹️ Controls
 
 | Action       | Key        |
-|—————|————|
+|——————————————|————————————|
 | Move left    | ← arrow    |
 | Move right   | → arrow    |
 | Drop faster  | ↓ arrow    |
@@ -50,4 +50,4 @@ open index.html
 ## 🌐 Play Online
 
 You can also play Fruitris on Gitbook Pages:
-[https://fabian-grid.gitbook.io/fruitris/index.html](https://fabian-grid.gitbook.io/fruitris/index.html)
+[https://fabian-grid.gitbook.io/fruitris/index.html](https://fabian-grid.github.io/Fruitris/)
