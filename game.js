@@ -40,7 +40,7 @@ let gameOver = false;
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
 const curveK = 0.03;
-const curveMid = 420; // seconds
+const curveMid = 180; // seconds (midpoint occurs after 3 minutes)
 
 function randomFruit() {
   const index = Math.floor(Math.random() * fruitTypes.length);
