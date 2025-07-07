@@ -49,6 +49,11 @@ body {
   padding: 8px 12px;
 }
 
+#touchControls button {
+  font-size: 1.5rem;
+  padding: 8px;
+}
+
 #grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));

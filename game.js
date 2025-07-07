@@ -4,6 +4,7 @@ const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
 const touchControls = document.getElementById('touchControls');
+
 let startTouchX = 0;
 let startTouchY = 0;
 
@@ -334,6 +335,7 @@ function onGridTouchEnd(e) {
   }
   renderGrid();
 }
+
 function lockColumn() {
   let outOfBounds = false;
   for (let i = 0; i < 3; i++) {
@@ -385,6 +387,8 @@ if (touchControls) {
   touchControls.addEventListener('click', handleTouch);
   touchControls.addEventListener('touchstart', handleTouch);
 }
+
 gridElement.addEventListener('touchstart', onGridTouchStart, { passive: false });
 gridElement.addEventListener('touchend', onGridTouchEnd);
+
 requestAnimationFrame(update);
