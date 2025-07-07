@@ -230,7 +230,8 @@ function processMatches() {
     matches.forEach(({ x, y }) => {
       grid[y][x] = null;
     });
-    score += matches.length;
+    const matchedCount = matches.length;
+    score += Math.floor((matchedCount / 3) * matchedCount);
     updateScore();
     applyGravity();
     renderGrid();
@@ -273,14 +274,21 @@ function handleKey(e) {
 }
 
 function lockColumn() {
+  let outOfBounds = false;
   for (let i = 0; i < 3; i++) {
     const y = columnY + i;
-    if (y >= 0 && y < gridHeight) {
+    if (y < 0) {
+      outOfBounds = true;
+    } else if (y < gridHeight) {
       grid[y][columnX] = currentColumn[i];
     }
   }
   currentColumn = null;
-  processMatches();
+  if (outOfBounds) {
+    endGame();
+  } else {
+    processMatches();
+  }
 }
 
 function update(timestamp) {
