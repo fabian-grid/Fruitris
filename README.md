@@ -34,7 +34,7 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 | Drop faster  | ↓ arrow    |
 | Rotate       | <space>    |
 | Restart game | R (planned)|
-| Touch play   | On-screen buttons |
+| Touch play   | On-screen buttons or swipe/tap |
 
 —
 
