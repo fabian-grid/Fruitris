@@ -3,6 +3,7 @@ const gridElement = document.getElementById('grid');
 const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
+const touchControls = document.getElementById('touchControls');
 
 const gridWidth = 10;
 const gridHeight = 20;
@@ -273,6 +274,27 @@ function handleKey(e) {
   }
 }
 
+function handleTouch(e) {
+  const action = e.target.dataset.action;
+  if (!currentColumn || !action) return;
+  e.preventDefault();
+  switch (action) {
+    case 'left':
+      if (canMoveLeft()) columnX--;
+      break;
+    case 'right':
+      if (canMoveRight()) columnX++;
+      break;
+    case 'drop':
+      hardDrop();
+      break;
+    case 'rotate':
+      rotateColumn();
+      break;
+  }
+  renderGrid();
+}
+
 function lockColumn() {
   let outOfBounds = false;
   for (let i = 0; i < 3; i++) {
@@ -320,4 +342,8 @@ updateScore();
 updateTime(0);
 spawnColumn();
 document.addEventListener('keydown', handleKey);
+if (touchControls) {
+  touchControls.addEventListener('click', handleTouch);
+  touchControls.addEventListener('touchstart', handleTouch);
+}
 requestAnimationFrame(update);

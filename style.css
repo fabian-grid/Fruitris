@@ -37,6 +37,18 @@ body {
   font-size: 1rem;
 }
 
+#touchControls {
+  display: none;
+  margin-top: 8px;
+  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+#touchControls button {
+  font-size: 1.5rem;
+  padding: 8px;
+}
+
 #grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
@@ -56,4 +68,22 @@ body {
   align-items: center;
   font-size: 1.5rem;
   box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  :root {
+    --cell-size: 24px;
+  }
+  #controls {
+    display: none;
+  }
+  #touchControls {
+    display: grid;
+  }
+  #title {
+    font-size: 1.5rem;
+  }
+  #info {
+    font-size: 1rem;
+  }
 }
