@@ -26,6 +26,9 @@ for (let y = 0; y < gridHeight; y++) {
 let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
 
 const fruitTypes = ['🍌', '🍏', '🍑', '🍒', '🫐', '🥥'];
+const specialTypes = ['💣', '🔫', '🏹'];
+
+let nextSpecialTime = 30 + Math.random() * 15; // seconds until first special
 
 let currentColumn = null; // array of 3 fruits
 let columnX = 0;
@@ -47,8 +50,15 @@ function randomFruit() {
   return fruitTypes[index];
 }
 
-function spawnColumn() {
+function spawnColumn(elapsed = 0) {
   currentColumn = [randomFruit(), randomFruit(), randomFruit()];
+  // insert special power if it's time
+  if (elapsed >= nextSpecialTime) {
+    const idx = Math.floor(Math.random() * 3);
+    const special = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+    currentColumn[idx] = special;
+    scheduleNextSpecial(elapsed, computeDropInterval(elapsed));
+  }
   // spawn in a random column within the grid
   columnX = Math.floor(Math.random() * gridWidth);
   // start just above the grid so the top fruit appears immediately
@@ -211,6 +221,45 @@ function computeDropInterval(elapsed) {
   return minInterval + (startInterval - minInterval) * (1 - factor);
 }
 
+function scheduleNextSpecial(elapsed, dropInterval) {
+  const base = 30 + Math.random() * 15; // 30-45 seconds
+  const factor = dropInterval / startInterval;
+  const interval = Math.max(5, base * factor);
+  nextSpecialTime = elapsed + interval;
+}
+
+function handleSpecial(x, y, emoji) {
+  if (emoji === '💣') {
+    // remove all fruit matching the one below the bomb
+    const below = y + 1;
+    if (below < gridHeight) {
+      const target = grid[below][x];
+      if (target && !specialTypes.includes(target)) {
+        for (let yy = 0; yy < gridHeight; yy++) {
+          for (let xx = 0; xx < gridWidth; xx++) {
+            if (grid[yy][xx] === target) {
+              grid[yy][xx] = null;
+            }
+          }
+        }
+      }
+    }
+  } else if (emoji === '🔫') {
+    for (let xx = x + 1; xx < gridWidth; xx++) {
+      grid[y][xx] = null;
+    }
+  } else if (emoji === '🏹') {
+    let sx = x - 1;
+    let sy = y - 1;
+    while (sx >= 0 && sy >= 0) {
+      grid[sy][sx] = null;
+      sx--;
+      sy--;
+    }
+  }
+  grid[y][x] = null;
+}
+
 function endGame() {
   gameOver = true;
   gameOverDisplay.style.display = 'block';
@@ -338,18 +387,24 @@ function onGridTouchEnd(e) {
 
 function lockColumn() {
   let outOfBounds = false;
+  const specials = [];
   for (let i = 0; i < 3; i++) {
     const y = columnY + i;
     if (y < 0) {
       outOfBounds = true;
     } else if (y < gridHeight) {
       grid[y][columnX] = currentColumn[i];
+      if (specialTypes.includes(currentColumn[i])) {
+        specials.push({ x: columnX, y, emoji: currentColumn[i] });
+      }
     }
   }
   currentColumn = null;
   if (outOfBounds) {
     endGame();
   } else {
+    specials.forEach(s => handleSpecial(s.x, s.y, s.emoji));
+    applyGravity();
     processMatches();
   }
 }
@@ -362,7 +417,7 @@ function update(timestamp) {
   updateTime(elapsed);
 
   if (!currentColumn && !isClearing) {
-    spawnColumn();
+    spawnColumn(elapsed);
   }
 
   const interval = computeDropInterval(elapsed);
@@ -381,7 +436,7 @@ function update(timestamp) {
 
 updateScore();
 updateTime(0);
-spawnColumn();
+spawnColumn(0);
 document.addEventListener('keydown', handleKey);
 if (touchControls) {
   touchControls.addEventListener('click', handleTouch);
