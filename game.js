@@ -3,6 +3,9 @@ const gridElement = document.getElementById('grid');
 const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
+const touchControls = document.getElementById('touchControls');
+let startTouchX = 0;
+let startTouchY = 0;
 
 const gridWidth = 10;
 const gridHeight = 20;
@@ -273,6 +276,65 @@ function handleKey(e) {
   }
 }
 
+function handleTouch(e) {
+  const action = e.target.dataset.action;
+  if (!currentColumn || !action) return;
+  e.preventDefault();
+  switch (action) {
+    case 'left':
+      if (canMoveLeft()) columnX--;
+      break;
+    case 'right':
+      if (canMoveRight()) columnX++;
+      break;
+    case 'drop':
+      hardDrop();
+      break;
+    case 'rotate':
+      rotateColumn();
+      break;
+  }
+  renderGrid();
+}
+
+function onGridTouchStart(e) {
+  if (!currentColumn) return;
+  const t = e.touches[0];
+  startTouchX = t.clientX;
+  startTouchY = t.clientY;
+  e.preventDefault();
+}
+
+function onGridTouchEnd(e) {
+  if (!currentColumn) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - startTouchX;
+  const dy = t.clientY - startTouchY;
+  const absX = Math.abs(dx);
+  const absY = Math.abs(dy);
+  const threshold = 30;
+
+  if (absX > absY && absX > threshold) {
+    if (dx > 0 && canMoveRight()) columnX++;
+    if (dx < 0 && canMoveLeft()) columnX--;
+  } else if (absY > absX && dy > threshold) {
+    hardDrop();
+  } else {
+    const rect = gridElement.getBoundingClientRect();
+    const cellSize = rect.width / gridWidth;
+    const tapX = Math.floor((t.clientX - rect.left) / cellSize);
+    const tapY = Math.floor((t.clientY - rect.top) / cellSize);
+    if (tapX === columnX && tapY >= columnY && tapY <= columnY + 2) {
+      rotateColumn();
+    } else if (tapX < columnX && canMoveLeft()) {
+      columnX--;
+    } else if (tapX > columnX && canMoveRight()) {
+      columnX++;
+    }
+  }
+  renderGrid();
+}
+
 function lockColumn() {
   let outOfBounds = false;
   for (let i = 0; i < 3; i++) {
@@ -320,4 +382,10 @@ updateScore();
 updateTime(0);
 spawnColumn();
 document.addEventListener('keydown', handleKey);
+if (touchControls) {
+  touchControls.addEventListener('click', handleTouch);
+  touchControls.addEventListener('touchstart', handleTouch);
+}
+gridElement.addEventListener('touchstart', onGridTouchStart, { passive: false });
+gridElement.addEventListener('touchend', onGridTouchEnd);
 requestAnimationFrame(update);
