@@ -5,6 +5,7 @@ const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
 const touchControls = document.getElementById('touchControls');
 const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+const restartButton = document.getElementById('restartButton');
 
 let startTouchX = 0;
 let startTouchY = 0;
@@ -351,6 +352,26 @@ function endGame() {
   gameOverDisplay.style.display = 'block';
 }
 
+function restartGame() {
+  grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
+  currentColumn = null;
+  columnX = 0;
+  columnY = 0;
+  isClearing = false;
+  startTime = null;
+  score = 0;
+  nextSpecialTime = 30 + Math.random() * 15;
+  updateScore();
+  updateTime(0);
+  gameOver = false;
+  gameOverDisplay.style.display = 'none';
+  const selected = document.querySelector('input[name="difficulty"]:checked');
+  if (selected) setDifficulty(selected.value);
+  spawnColumn(0);
+  renderGrid();
+  requestAnimationFrame(update);
+}
+
 function processMatches() {
   const matches = findMatches();
   if (matches.length === 0) {
@@ -386,8 +407,16 @@ function hardDrop() {
 }
 
 function handleKey(e) {
-  if (!currentColumn) return;
   let handled = false;
+  if (e.code === 'KeyR') {
+    restartGame();
+    handled = true;
+  }
+  if (!currentColumn) {
+    if (handled) e.preventDefault();
+    return;
+  }
+  
   switch (e.code) {
     case 'ArrowLeft':
       if (canMoveLeft()) columnX--;
@@ -522,10 +551,7 @@ function update(timestamp) {
   requestAnimationFrame(update);
 }
 
-setDifficulty('standard');
-updateScore();
-updateTime(0);
-spawnColumn(0);
+restartButton.addEventListener('click', restartGame);
 document.addEventListener('keydown', handleKey);
 if (touchControls) {
   touchControls.addEventListener('click', handleTouch);
@@ -541,4 +567,4 @@ difficultyRadios.forEach(r =>
   })
 );
 
-requestAnimationFrame(update);
+restartGame();
