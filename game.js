@@ -4,6 +4,7 @@ const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
 const touchControls = document.getElementById('touchControls');
+const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
 
 let startTouchX = 0;
 let startTouchY = 0;
@@ -25,7 +26,8 @@ for (let y = 0; y < gridHeight; y++) {
 // Create 2D grid array
 let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
 
-const fruitTypes = ['🍌', '🍏', '🍑', '🍒', '🫐', '🥥'];
+const baseFruits = ['🍓', '🍌', '🍇', '🍍', '🍎', '🍒'];
+let fruitTypes = baseFruits.slice(0, 4); // standard difficulty default
 const specialTypes = ['💣', '🔫', '🏹'];
 
 let nextSpecialTime = 30 + Math.random() * 15; // seconds until first special
@@ -219,6 +221,36 @@ function updateTime(elapsed) {
 function computeDropInterval(elapsed) {
   const factor = 1 / (1 + Math.exp(-curveK * (elapsed - curveMid)));
   return minInterval + (startInterval - minInterval) * (1 - factor);
+}
+
+function setDifficulty(level) {
+  const counts = { easy: 3, standard: 4, hard: 5 };
+  fruitTypes = baseFruits.slice(0, counts[level] || 4);
+  cleanDisallowedFruits();
+}
+
+function cleanDisallowedFruits() {
+  const allowed = new Set([...fruitTypes, ...specialTypes]);
+  let changed = false;
+  for (let y = 0; y < gridHeight; y++) {
+    for (let x = 0; x < gridWidth; x++) {
+      if (grid[y][x] && !allowed.has(grid[y][x])) {
+        grid[y][x] = null;
+        changed = true;
+      }
+    }
+  }
+  if (currentColumn) {
+    for (let i = 0; i < 3; i++) {
+      if (currentColumn[i] && !allowed.has(currentColumn[i])) {
+        currentColumn[i] = randomFruit();
+      }
+    }
+  }
+  if (changed) {
+    applyGravity();
+    renderGrid();
+  }
 }
 
 function scheduleNextSpecial(elapsed, dropInterval) {
@@ -476,6 +508,7 @@ function update(timestamp) {
   requestAnimationFrame(update);
 }
 
+setDifficulty('standard');
 updateScore();
 updateTime(0);
 spawnColumn(0);
@@ -487,5 +520,11 @@ if (touchControls) {
 
 gridElement.addEventListener('touchstart', onGridTouchStart, { passive: false });
 gridElement.addEventListener('touchend', onGridTouchEnd);
+
+difficultyRadios.forEach(r =>
+  r.addEventListener('change', () => {
+    if (r.checked) setDifficulty(r.value);
+  })
+);
 
 requestAnimationFrame(update);
