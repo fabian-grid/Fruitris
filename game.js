@@ -63,6 +63,7 @@ let lastDrop = 0;
 let startTime = null;
 let score = 0;
 let gameOver = false;
+let fallProgress = 0; // fraction between drops for smooth animation
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
@@ -115,6 +116,15 @@ function renderGrid() {
   document.querySelectorAll('.cell.highlight').forEach(c => {
     c.classList.remove('highlight');
   });
+  // reset transforms on all cells
+  document.querySelectorAll('.cell').forEach(c => {
+    c.style.transform = '';
+  });
+
+  const cellSize = parseInt(
+    getComputedStyle(document.documentElement).getPropertyValue('--cell-size')
+  );
+  const offset = fallProgress * cellSize; // pixel offset for smooth fall
 
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
@@ -126,6 +136,10 @@ function renderGrid() {
       const y = columnY + i;
       if (y >= 0 && y < gridHeight) {
         updateCell(columnX, y, currentColumn[i]);
+        const cell = document.querySelector(
+          `.cell[data-x="${columnX}"][data-y="${y}"]`
+        );
+        if (cell) cell.style.transform = `translateY(${offset}px)`;
       }
     }
     // highlight the entire column
@@ -537,9 +551,14 @@ function lockColumn() {
       if (specialTypes.includes(currentColumn[i])) {
         specials.push({ x: columnX, y, emoji: currentColumn[i] });
       }
+      const cell = document.querySelector(
+        `.cell[data-x="${columnX}"][data-y="${y}"]`
+      );
+      if (cell) cell.style.transform = '';
     }
   }
   currentColumn = null;
+  fallProgress = 0;
   if (outOfBounds) {
     endGame();
   } else {
@@ -563,6 +582,7 @@ function update(timestamp) {
   }
 
   const interval = computeDropInterval(elapsed);
+  fallProgress = Math.min((timestamp - lastDrop) / interval, 1);
   if (timestamp - lastDrop > interval) {
     if (currentColumn && canMoveDown()) {
       columnY++;
@@ -570,6 +590,7 @@ function update(timestamp) {
       lockColumn();
     }
     lastDrop = timestamp;
+    fallProgress = 0;
   }
 
   renderGrid();
