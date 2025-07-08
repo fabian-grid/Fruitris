@@ -4,10 +4,10 @@
 
 body {
   margin: 0;
+  padding: 1rem;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100vh;
+  align-items: flex-start;
+  justify-content: flex-start;
   background: #f9f9f9;
   font-family: sans-serif;
 }
@@ -19,9 +19,15 @@ body {
 
 #layout {
   display: grid;
-  grid-template-columns: 150px auto 220px;
+  grid-template-columns: auto 220px;
   gap: 1rem;
   align-items: start;
+}
+
+#rightPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 #sidebar {
@@ -83,7 +89,7 @@ body {
 #grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
-  grid-template-rows: repeat(20, var(--cell-size));
+  grid-template-rows: repeat(15, var(--cell-size));
   gap: 0;
   background: #ddd;
   padding: 4px;
@@ -102,7 +108,7 @@ body {
 }
 
 .highlight {
-  background: rgba(0, 0, 0, 0.05);
+  background: #fafafa;
 }
 
 @media (max-width: 480px) {
