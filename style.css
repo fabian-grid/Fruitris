@@ -34,6 +34,12 @@ body {
 
 #gameArea {
   position: relative;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#gameArea:focus {
+  outline: none;
 }
 
 #sidebar {
@@ -103,6 +109,7 @@ body {
   gap: 0;
   background: #ddd;
   padding: 4px;
+  user-select: none;
 }
 
 .cell {
