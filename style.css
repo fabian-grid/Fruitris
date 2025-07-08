@@ -6,6 +6,7 @@ body {
   margin: 0;
   padding: 1rem;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
   background: #f9f9f9;
@@ -76,21 +77,18 @@ body {
   border-radius: 4px;
   font-size: 2rem;
   color: red;
+  font-family: 'Press Start 2P', cursive;
+  white-space: nowrap;
   display: none;
   pointer-events: none;
 }
 
 
 #touchControls {
-  display: none;
+  display: grid;
   margin-top: 8px;
   gap: 16px;
   grid-template-columns: repeat(4, 1fr);
-}
-
-#touchControls button {
-  font-size: 2.5rem;
-  padding: 8px 12px;
 }
 
 #touchControls button {
