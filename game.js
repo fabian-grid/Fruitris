@@ -229,8 +229,9 @@ function scheduleNextSpecial(elapsed, dropInterval) {
 }
 
 function handleSpecial(x, y, emoji) {
+  const cells = [];
   if (emoji === '💣') {
-    // remove all fruit matching the one below the bomb
+    // collect all fruit matching the one below the bomb
     const below = y + 1;
     if (below < gridHeight) {
       const target = grid[below][x];
@@ -238,7 +239,7 @@ function handleSpecial(x, y, emoji) {
         for (let yy = 0; yy < gridHeight; yy++) {
           for (let xx = 0; xx < gridWidth; xx++) {
             if (grid[yy][xx] === target) {
-              grid[yy][xx] = null;
+              cells.push({ x: xx, y: yy });
             }
           }
         }
@@ -246,18 +247,57 @@ function handleSpecial(x, y, emoji) {
     }
   } else if (emoji === '🔫') {
     for (let xx = x + 1; xx < gridWidth; xx++) {
-      grid[y][xx] = null;
+      if (grid[y][xx]) cells.push({ x: xx, y });
     }
   } else if (emoji === '🏹') {
     let sx = x - 1;
     let sy = y - 1;
     while (sx >= 0 && sy >= 0) {
-      grid[sy][sx] = null;
+      if (grid[sy][sx]) cells.push({ x: sx, y: sy });
       sx--;
       sy--;
     }
   }
-  grid[y][x] = null;
+  cells.push({ x, y });
+  return cells;
+}
+
+function resolveSpecialClears(cells) {
+  if (cells.length === 0) {
+    applyGravity();
+    processMatches();
+    return;
+  }
+
+  // remove duplicate coordinates
+  const unique = [];
+  const seen = new Set();
+  cells.forEach(c => {
+    const key = `${c.x},${c.y}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(c);
+    }
+  });
+
+  isClearing = true;
+  unique.forEach(({ x, y }) => {
+    grid[y][x] = '💥';
+  });
+  renderGrid();
+
+  // show explosion then remove fruits and score
+  setTimeout(() => {
+    unique.forEach(({ x, y }) => {
+      grid[y][x] = null;
+    });
+    const count = unique.length;
+    score += Math.floor((count / 3) * count);
+    updateScore();
+    applyGravity();
+    renderGrid();
+    setTimeout(processMatches, 200);
+  }, 200);
 }
 
 function endGame() {
@@ -403,9 +443,11 @@ function lockColumn() {
   if (outOfBounds) {
     endGame();
   } else {
-    specials.forEach(s => handleSpecial(s.x, s.y, s.emoji));
-    applyGravity();
-    processMatches();
+    const cleared = [];
+    specials.forEach(s => {
+      cleared.push(...handleSpecial(s.x, s.y, s.emoji));
+    });
+    resolveSpecialClears(cleared);
   }
 }
 
