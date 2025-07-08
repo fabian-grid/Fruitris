@@ -12,10 +12,10 @@ let startTouchY = 0;
 
 // simple sound effects using Web Audio API
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSound(freq, duration) {
+function playSound(freq, duration, type = 'sine') {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
-  osc.type = 'sine';
+  osc.type = type;
   osc.frequency.value = freq;
   osc.connect(gain);
   gain.connect(audioCtx.destination);
@@ -29,6 +29,11 @@ function playPop() {
 }
 function playBop() {
   playSound(250, 0.15);
+}
+
+function playLoseSound() {
+  playSound(200, 0.3, 'square');
+  setTimeout(() => playSound(150, 0.3, 'square'), 150);
 }
 
 const gridWidth = 10;
@@ -388,6 +393,7 @@ function resolveSpecialClears(cells) {
 function endGame() {
   gameOver = true;
   gameOverDisplay.style.display = 'block';
+  playLoseSound();
 }
 
 function restartGame() {
