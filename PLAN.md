@@ -18,7 +18,7 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 
 ### Falling Fruit Columns
 - [ ] Define difficulty level (speed of falling and number of fruit)
-- [x] Define emoji set (`🍓`, `🍌`, `🍇`, `🍍`, `🍏`, `🍒`)
+- [x] Define emoji set (`🥥`, `🍌`, `🍇`, `🍊`, `🍏`, `🍒`)
 - [x] Generate 3-emoji vertical column at top of grid
 - [x] Animate column falling over time
 - [x] Allow movement: ← (left), → (right), ↓ (faster fall), ‘ ‘ (space; rotate fruit in column)
