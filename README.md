@@ -14,15 +14,15 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 
 ## 📦 Features
 
-- 🍓 Falling columns made of 3 random fruit emojis (number of fruit based on difficulty level (just 🍌, 🍒, 🍏 to start with, in a random order within column)
+- 🥥 Falling columns made of 3 random fruit emojis (number of fruit based on difficulty level — starting set is 🥥, 🍌 and 🍇 in a random order within each column)
 - 🔃 Rotate order of fruit by pressing space before dropping
 - 🧠 Match-3 detection in **8 directions** (up, down, left, right, and diagonals)
 - 🍒 Gravity-based settling after clears
 - 💣 Bomb clears all fruit matching the one it lands on
 - 🔫 Gun clears all fruit to its right
 - 🏹 Arrow clears the diagonal toward the top-left
-- 🍍 Combo chaining for advanced play
-- 🍎 Game over detection and restart flow
+- 🍊 Combo chaining for advanced play
+- 🍏 Game over detection and restart flow
 - 💻 Local-only game — runs entirely in the browser (no backend)
 
 —

@@ -133,9 +133,8 @@ Refer to [`PLAN.md`](./PLAN.md) for detailed milestones and [`README.md`](./READ
 Use the following emoji pool for fruits:
 
 ```js
-const fruitTypes = [‘🍓’, ‘🍌’, ‘🍇’, ‘🍍’, ‘🍎’, ‘🍒’];
+const fruitTypes = ['🥥', '🍌', '🍇', '🍊', '🍏', '🍒'];
 ```
 
 —
-
 *End of Codex Agent Guidelines*

@@ -31,6 +31,14 @@ function playBop() {
   playSound(250, 0.15);
 }
 
+function initAudio() {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+document.addEventListener('keydown', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
+
 const gridWidth = 10;
 const gridHeight = 15;
 
@@ -48,7 +56,8 @@ for (let y = 0; y < gridHeight; y++) {
 // Create 2D grid array
 let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
 
-const baseFruits = ['🍓', '🍌', '🍇', '🍍', '🍎', '🍒'];
+// base fruit set
+const baseFruits = ['🥥', '🍌', '🍇', '🍊', '🍏', '🍒'];
 let fruitTypes = baseFruits.slice(0, 4); // standard difficulty default
 const specialTypes = ['💣', '🔫', '🏹'];
 
@@ -112,10 +121,6 @@ function updateCell(x, y, emoji) {
 }
 
 function renderGrid() {
-  // clear existing column highlights
-  document.querySelectorAll('.cell.highlight').forEach(c => {
-    c.classList.remove('highlight');
-  });
   // reset transforms on all cells
   document.querySelectorAll('.cell').forEach(c => {
     c.style.transform = '';
@@ -141,13 +146,6 @@ function renderGrid() {
         );
         if (cell) cell.style.transform = `translateY(${offset}px)`;
       }
-    }
-    // highlight the entire column
-    for (let y = 0; y < gridHeight; y++) {
-      const cell = document.querySelector(
-        `.cell[data-x="${columnX}"][data-y="${y}"]`
-      );
-      if (cell) cell.classList.add('highlight');
     }
   }
 }
@@ -447,12 +445,13 @@ function hardDrop() {
 
 function handleKey(e) {
   let handled = false;
+  const blockKeys = ['Space', 'ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp'];
+  if (blockKeys.includes(e.code)) e.preventDefault();
   if (e.code === 'KeyR') {
     restartGame();
     handled = true;
   }
   if (!currentColumn) {
-    if (handled) e.preventDefault();
     return;
   }
   
