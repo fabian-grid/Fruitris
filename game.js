@@ -44,8 +44,9 @@ let gameOver = false;
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
-const curveK = 0.03;
-const curveMid = 180; // seconds (midpoint occurs after 3 minutes)
+// Adjust curve so the game speeds up faster
+const curveK = 0.05;
+const curveMid = 90; // seconds (midpoint occurs after 1.5 minutes)
 
 function randomFruit() {
   const index = Math.floor(Math.random() * fruitTypes.length);
@@ -86,6 +87,11 @@ function updateCell(x, y, emoji) {
 }
 
 function renderGrid() {
+  // clear existing column highlights
+  document.querySelectorAll('.cell.highlight').forEach(c => {
+    c.classList.remove('highlight');
+  });
+
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
       updateCell(x, y, grid[y][x]);
@@ -97,6 +103,13 @@ function renderGrid() {
       if (y >= 0 && y < gridHeight) {
         updateCell(columnX, y, currentColumn[i]);
       }
+    }
+    // highlight the entire column
+    for (let y = 0; y < gridHeight; y++) {
+      const cell = document.querySelector(
+        `.cell[data-x="${columnX}"][data-y="${y}"]`
+      );
+      if (cell) cell.classList.add('highlight');
     }
   }
 }
@@ -278,7 +291,8 @@ function handleSpecial(x, y, emoji) {
       }
     }
   } else if (emoji === '🔫') {
-    for (let xx = x + 1; xx < gridWidth; xx++) {
+    // Gun now fires to the left instead of the right
+    for (let xx = x - 1; xx >= 0; xx--) {
       if (grid[y][xx]) cells.push({ x: xx, y });
     }
   } else if (emoji === '🏹') {
