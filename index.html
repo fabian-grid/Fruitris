@@ -10,20 +10,7 @@
   <link id="mainStyle" rel="stylesheet">
 </head>
 <body>
-  <h1 id="title">Fruitris</h1>
   <div id="layout">
-    <div id="sidebar">
-      <div id="info">
-        <span>Time: <span id="time">00:00</span></span>
-        <span id="score">Score: 0</span>
-      </div>
-      <div id="difficulty">
-        <label><input type="radio" name="difficulty" value="easy"> Easy</label>
-        <label><input type="radio" name="difficulty" value="standard" checked> Standard</label>
-        <label><input type="radio" name="difficulty" value="hard"> Hard</label>
-      </div>
-      <button id="restartButton">Restart</button>
-    </div>
     <div id="gameArea">
       <div id="gameOver">Game Over</div>
       <div id="grid" class="grid"></div>
@@ -34,12 +21,27 @@
         <button data-action="drop">⬇️</button>
       </div>
     </div>
-    <div id="instructions">
-      <h2>How to Play</h2>
-      <p><strong>Aim:</strong> Align three matching fruits horizontally, vertically or diagonally to clear them.</p>
-      <p><strong>Touch:</strong> Use the on-screen buttons or swipe left/right, swipe down to drop and tap the column to rotate.</p>
-      <p><strong>Keys:</strong> ←/→ move, ↓ drop, space rotate, R restart.</p>
-      <p><strong>Specials:</strong> 💣 clears all matching fruit below, 🔫 clears to the left, 🏹 clears diagonally up-left.</p>
+    <div id="rightPanel">
+      <h1 id="title">Fruitris</h1>
+      <div id="sidebar">
+        <div id="info">
+          <span>Time: <span id="time">00:00</span></span>
+          <span id="score">Score: 0</span>
+        </div>
+        <div id="difficulty">
+          <label><input type="radio" name="difficulty" value="easy"> Easy</label>
+          <label><input type="radio" name="difficulty" value="standard" checked> Standard</label>
+          <label><input type="radio" name="difficulty" value="hard"> Hard</label>
+        </div>
+        <button id="restartButton">Restart</button>
+      </div>
+      <div id="instructions">
+        <h2>How to Play</h2>
+        <p><strong>Aim:</strong> Align three or more matching fruits horizontally, vertically or diagonally to clear them.</p>
+        <p><strong>Touch:</strong> Use the on-screen buttons or swipe left/right, swipe down to drop and tap the column to rotate.</p>
+        <p><strong>Keys:</strong> ←/→ move, ↓ drop, space rotate, R restart.</p>
+        <p><strong>Specials:</strong> 💣 clears all matching fruit below, 🔫 clears to the left, 🏹 clears diagonally up-right.</p>
+      </div>
     </div>
   </div>
   <script>

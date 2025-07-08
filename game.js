@@ -10,8 +10,29 @@ const restartButton = document.getElementById('restartButton');
 let startTouchX = 0;
 let startTouchY = 0;
 
+// simple sound effects using Web Audio API
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(freq, duration) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.stop(audioCtx.currentTime + duration);
+}
+function playPop() {
+  playSound(600, 0.1);
+}
+function playBop() {
+  playSound(250, 0.15);
+}
+
 const gridWidth = 10;
-const gridHeight = 20;
+const gridHeight = 15;
 
 // Create grid cells in the DOM
 for (let y = 0; y < gridHeight; y++) {
@@ -63,8 +84,10 @@ function spawnColumn(elapsed = 0) {
     currentColumn[idx] = special;
     scheduleNextSpecial(elapsed, computeDropInterval(elapsed));
   }
-  // spawn in a random column within the grid
-  columnX = Math.floor(Math.random() * gridWidth);
+  // keep using the previous column position
+  if (columnX < 0 || columnX >= gridWidth) {
+    columnX = Math.floor(gridWidth / 2);
+  }
   // start just above the grid so the top fruit appears immediately
   columnY = -1;
   // reset drop timer so new column begins falling immediately
@@ -297,11 +320,11 @@ function handleSpecial(x, y, emoji) {
       if (grid[y][xx]) cells.push({ x: xx, y });
     }
   } else if (emoji === '🏹') {
-    let sx = x - 1;
+    let sx = x + 1;
     let sy = y - 1;
-    while (sx >= 0 && sy >= 0) {
+    while (sx < gridWidth && sy >= 0) {
       if (grid[sy][sx]) cells.push({ x: sx, y: sy });
-      sx--;
+      sx++;
       sy--;
     }
   }
@@ -341,6 +364,7 @@ function resolveSpecialClears(cells) {
     const count = unique.length;
     score += Math.floor((count / 3) * count);
     updateScore();
+    playBop();
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
@@ -393,6 +417,7 @@ function processMatches() {
     const matchedCount = matches.length;
     score += Math.floor((matchedCount / 3) * matchedCount);
     updateScore();
+    playPop();
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
