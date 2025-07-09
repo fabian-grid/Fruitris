@@ -105,7 +105,7 @@ body {
 #grid {
   display: grid;
   grid-template-columns: repeat(10, var(--cell-size));
-  grid-template-rows: repeat(20, var(--cell-size));
+  grid-template-rows: repeat(18, var(--cell-size));
   gap: 0;
   padding: 0;
   background: none;

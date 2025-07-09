@@ -110,7 +110,7 @@ document.addEventListener('keydown', initAudio, { once: true });
 document.addEventListener('touchstart', initAudio, { once: true });
 
 const gridWidth = 10;
-const gridHeight = 20;
+const gridHeight = 18;
 
 // Create grid cells in the DOM
 for (let y = 0; y < gridHeight; y++) {
