@@ -12,23 +12,92 @@ let startTouchY = 0;
 
 // simple sound effects using Web Audio API
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSound(freq, duration, type = 'sine') {
+
+// note frequency lookup table
+const noteFreq = {
+  C4: 261.63,
+  D4: 293.66,
+  F4: 349.23,
+  A4: 440,
+  B4: 493.88,
+  C5: 523.25,
+  E5: 659.25,
+  G5: 783.99,
+  C6: 1046.5
+};
+
+function playOsc(type, frequency, duration, start = audioCtx.currentTime) {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = type;
-  osc.frequency.value = freq;
+  osc.frequency.value = frequency;
   osc.connect(gain);
   gain.connect(audioCtx.destination);
-  osc.start();
-  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-  osc.stop(audioCtx.currentTime + duration);
+  gain.gain.setValueAtTime(0.2, start);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  osc.start(start);
+  osc.stop(start + duration);
 }
-function playPop() {
-  playSound(600, 0.1);
+
+function playNoise(duration, start = audioCtx.currentTime) {
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  const source = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  source.buffer = buffer;
+  source.connect(gain);
+  gain.connect(audioCtx.destination);
+  gain.gain.setValueAtTime(0.2, start);
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  source.start(start);
+  source.stop(start + duration);
 }
-function playBop() {
-  playSound(250, 0.15);
+
+function playSequence({ waveforms, notes, duration }) {
+  const noteDuration = duration / notes.length;
+  let time = audioCtx.currentTime;
+  notes.forEach(n => {
+    waveforms.forEach(wave => {
+      if (wave === 'noise') {
+        playNoise(noteDuration, time);
+      } else {
+        playOsc(wave, noteFreq[n], noteDuration, time);
+      }
+    });
+    time += noteDuration;
+  });
+}
+
+function playRestartSound() {
+  playSequence({ waveforms: ['square', 'triangle'], notes: ['C5', 'E5', 'G5'], duration: 0.5 });
+}
+
+function playGameOverSound() {
+  playSequence({ waveforms: ['square'], notes: ['C5', 'A4', 'F4', 'D4'], duration: 0.8 });
+}
+
+function playMatchSound() {
+  playSequence({ waveforms: ['square'], notes: ['G5', 'C6'], duration: 0.3 });
+}
+
+function playDestroySound() {
+  playSequence({ waveforms: ['noise', 'triangle'], notes: ['C6'], duration: 0.4 });
+}
+
+function playMoveSound() {
+  playSequence({ waveforms: ['square'], notes: ['B4'], duration: 0.15 });
+}
+
+function playRotateSound() {
+  playSequence({ waveforms: ['triangle'], notes: ['A4', 'C5'], duration: 0.2 });
+}
+
+function playDropSound() {
+  playSequence({ waveforms: ['triangle', 'noise'], notes: ['C4'], duration: 0.3 });
 }
 
 
@@ -39,11 +108,6 @@ function initAudio() {
 }
 document.addEventListener('keydown', initAudio, { once: true });
 document.addEventListener('touchstart', initAudio, { once: true });
-
-function playLoseSound() {
-  playSound(200, 0.3, 'square');
-  setTimeout(() => playSound(150, 0.3, 'square'), 150);
-}
 
 const gridWidth = 10;
 const gridHeight = 15;
@@ -382,7 +446,7 @@ function resolveSpecialClears(cells) {
     const count = unique.length;
     score += Math.floor((count / 3) * count);
     updateScore();
-    playBop();
+    playDestroySound();
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
@@ -392,7 +456,7 @@ function resolveSpecialClears(cells) {
 function endGame() {
   gameOver = true;
   gameOverDisplay.style.display = 'block';
-  playLoseSound();
+  playGameOverSound();
 }
 
 function restartGame() {
@@ -436,7 +500,7 @@ function processMatches() {
     const matchedCount = matches.length;
     score += Math.floor((matchedCount / 3) * matchedCount);
     updateScore();
-    playPop();
+    playMatchSound();
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
@@ -455,6 +519,7 @@ function handleKey(e) {
   const blockKeys = ['Space', 'ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp'];
   if (blockKeys.includes(e.code)) e.preventDefault();
   if (e.code === 'KeyR') {
+    playRestartSound();
     restartGame();
     handled = true;
   }
@@ -464,19 +529,27 @@ function handleKey(e) {
   
   switch (e.code) {
     case 'ArrowLeft':
-      if (canMoveLeft()) columnX--;
+      if (canMoveLeft()) {
+        columnX--;
+        playMoveSound();
+      }
       handled = true;
       break;
     case 'ArrowRight':
-      if (canMoveRight()) columnX++;
+      if (canMoveRight()) {
+        columnX++;
+        playMoveSound();
+      }
       handled = true;
       break;
     case 'ArrowDown':
+      playDropSound();
       hardDrop();
       handled = true;
       break;
     case 'Space':
       rotateColumn();
+      playRotateSound();
       handled = true;
       break;
   }
@@ -492,16 +565,24 @@ function handleTouch(e) {
   e.preventDefault();
   switch (action) {
     case 'left':
-      if (canMoveLeft()) columnX--;
+      if (canMoveLeft()) {
+        columnX--;
+        playMoveSound();
+      }
       break;
     case 'right':
-      if (canMoveRight()) columnX++;
+      if (canMoveRight()) {
+        columnX++;
+        playMoveSound();
+      }
       break;
     case 'drop':
+      playDropSound();
       hardDrop();
       break;
     case 'rotate':
       rotateColumn();
+      playRotateSound();
       break;
   }
   renderGrid();
@@ -525,22 +606,36 @@ function onGridTouchEnd(e) {
   const threshold = 30;
 
   if (absX > absY && absX > threshold) {
-    if (dx > 0 && canMoveRight()) columnX++;
-    if (dx < 0 && canMoveLeft()) columnX--;
+    let moved = false;
+    if (dx > 0 && canMoveRight()) {
+      columnX++;
+      moved = true;
+    }
+    if (dx < 0 && canMoveLeft()) {
+      columnX--;
+      moved = true;
+    }
+    if (moved) playMoveSound();
   } else if (absY > absX && dy > threshold) {
+    playDropSound();
     hardDrop();
   } else {
     const rect = gridElement.getBoundingClientRect();
     const cellSize = rect.width / gridWidth;
     const tapX = Math.floor((t.clientX - rect.left) / cellSize);
     const tapY = Math.floor((t.clientY - rect.top) / cellSize);
+    let moved = false;
     if (tapX === columnX && tapY >= columnY && tapY <= columnY + 2) {
       rotateColumn();
+      playRotateSound();
     } else if (tapX < columnX && canMoveLeft()) {
       columnX--;
+      moved = true;
     } else if (tapX > columnX && canMoveRight()) {
       columnX++;
+      moved = true;
     }
+    if (moved) playMoveSound();
   }
   renderGrid();
 }
@@ -603,7 +698,10 @@ function update(timestamp) {
   requestAnimationFrame(update);
 }
 
-restartButton.addEventListener('click', restartGame);
+restartButton.addEventListener('click', () => {
+  playRestartSound();
+  restartGame();
+});
 document.addEventListener('keydown', handleKey);
 if (touchControls) {
   touchControls.addEventListener('click', handleTouch);
