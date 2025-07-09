@@ -23,6 +23,7 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 - 🏹 Arrow clears the diagonal toward the top-left
 - 🍊 Combo chaining for advanced play
 - 🍏 Game over detection and restart flow
+- 🎵 Retro 8-bit sound effects
 - 💻 Local-only game — runs entirely in the browser (no backend)
 
 —
@@ -35,7 +36,7 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 | Move right   | → arrow    |
 | Drop faster  | ↓ arrow    |
 | Rotate       | <space>    |
-| Restart game | R (planned)|
+| Restart game | R |
 | Touch play   | On-screen buttons or swipe/tap |
 
 —
