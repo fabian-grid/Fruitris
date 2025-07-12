@@ -127,6 +127,20 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+@keyframes flash {
+  0%,
+  100% {
+    background: transparent;
+  }
+  50% {
+    background: yellow;
+  }
+}
+
+#score.flash {
+  animation: flash 0.3s ease-in-out 0s 2;
+}
+
 
 @media (max-width: 480px) {
   :root {

@@ -100,6 +100,10 @@ function playDropSound() {
   playSequence({ waveforms: ['triangle', 'noise'], notes: ['C4'], duration: 0.3 });
 }
 
+function playBigClearSound() {
+  playSequence({ waveforms: ['sawtooth', 'square'], notes: ['C5', 'E5', 'G5', 'C6'], duration: 0.6 });
+}
+
 
 function initAudio() {
   if (audioCtx.state === 'suspended') {
@@ -327,6 +331,16 @@ function updateScore() {
   scoreDisplay.textContent = `Score: ${score}`;
 }
 
+function bigClearCelebration() {
+  scoreDisplay.textContent = `Score: ${score} 🎉`;
+  scoreDisplay.classList.add('flash');
+  setTimeout(() => {
+    scoreDisplay.classList.remove('flash');
+    scoreDisplay.textContent = `Score: ${score}`;
+  }, 600);
+  playBigClearSound();
+}
+
 function updateTime(elapsed) {
   const minutes = Math.floor(elapsed / 60)
     .toString()
@@ -446,7 +460,11 @@ function resolveSpecialClears(cells) {
     const count = unique.length;
     score += Math.floor((count / 3) * count);
     updateScore();
-    playDestroySound();
+    if (count > 6) {
+      bigClearCelebration();
+    } else {
+      playDestroySound();
+    }
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
@@ -500,7 +518,11 @@ function processMatches() {
     const matchedCount = matches.length;
     score += Math.floor((matchedCount / 3) * matchedCount);
     updateScore();
-    playMatchSound();
+    if (matchedCount > 6) {
+      bigClearCelebration();
+    } else {
+      playMatchSound();
+    }
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
