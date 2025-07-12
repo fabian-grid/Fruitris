@@ -331,8 +331,11 @@ function updateScore() {
   scoreDisplay.textContent = `Score: ${score}`;
 }
 
-function bigClearCelebration() {
-  scoreDisplay.textContent = `Score: ${score} 🎉`;
+function bigClearCelebration(count) {
+  // award additional bonus points for large clears
+  const bonus = Math.floor((count / 3) * count);
+  score += bonus;
+  scoreDisplay.textContent = `Score: ${score} ☄️`;
   scoreDisplay.classList.add('flash');
   setTimeout(() => {
     scoreDisplay.classList.remove('flash');
@@ -458,10 +461,11 @@ function resolveSpecialClears(cells) {
       grid[y][x] = null;
     });
     const count = unique.length;
-    score += Math.floor((count / 3) * count);
+    const basePoints = Math.floor((count / 3) * count);
+    score += basePoints;
     updateScore();
     if (count > 6) {
-      bigClearCelebration();
+      bigClearCelebration(count);
     } else {
       playDestroySound();
     }
@@ -516,10 +520,11 @@ function processMatches() {
       grid[y][x] = null;
     });
     const matchedCount = matches.length;
-    score += Math.floor((matchedCount / 3) * matchedCount);
+    const basePoints = Math.floor((matchedCount / 3) * matchedCount);
+    score += basePoints;
     updateScore();
     if (matchedCount > 6) {
-      bigClearCelebration();
+      bigClearCelebration(matchedCount);
     } else {
       playMatchSound();
     }
