@@ -3,6 +3,7 @@ const gridElement = document.getElementById('grid');
 const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
+const levelDisplay = document.getElementById('level');
 const touchControls = document.getElementById('touchControls');
 const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
 const restartButton = document.getElementById('restartButton');
@@ -146,15 +147,13 @@ let isClearing = false; // flag while matches are being removed
 let lastDrop = 0;
 let startTime = null;
 let score = 0;
+let level = 1;
 let gameOver = false;
 let fallProgress = 0; // fraction between drops for smooth animation
 const skullTimers = new Map();
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
-// Adjust curve so the game speeds up faster
-const curveK = 0.05;
-const curveMid = 90; // seconds (midpoint occurs after 1.5 minutes)
 
 function randomFruit() {
   const index = Math.floor(Math.random() * fruitTypes.length);
@@ -168,7 +167,7 @@ function spawnColumn(elapsed = 0) {
     const idx = Math.floor(Math.random() * 3);
     const special = specialTypes[Math.floor(Math.random() * specialTypes.length)];
     currentColumn[idx] = special;
-    scheduleNextSpecial(elapsed, computeDropInterval(elapsed));
+    scheduleNextSpecial(elapsed, computeDropInterval(level));
   }
   // keep using the previous column position
   if (columnX < 0 || columnX >= gridWidth) {
@@ -329,8 +328,26 @@ function applyGravity() {
   }
 }
 
+function computeLevel(value) {
+  if (value < 100) return 1;
+  if (value < 250) return 2;
+  let lvl = 3;
+  let threshold = 250;
+  while (value >= threshold * 2) {
+    threshold *= 2;
+    lvl++;
+  }
+  return lvl;
+}
+
+function updateLevel() {
+  level = computeLevel(score);
+  levelDisplay.textContent = `Level ${level}`;
+}
+
 function updateScore() {
   scoreDisplay.textContent = `Score: ${score}`;
+  updateLevel();
 }
 
 function bigClearCelebration(count) {
@@ -338,6 +355,7 @@ function bigClearCelebration(count) {
   const bonus = Math.floor((count / 3) * count);
   score += bonus;
   scoreDisplay.textContent = `Score: ${score}`;
+  updateLevel();
   scoreDisplay.classList.add('flash');
   setTimeout(() => {
     scoreDisplay.classList.remove('flash');
@@ -355,9 +373,8 @@ function updateTime(elapsed) {
   timeDisplay.textContent = `${minutes}:${seconds}`;
 }
 
-function computeDropInterval(elapsed) {
-  const factor = 1 / (1 + Math.exp(-curveK * (elapsed - curveMid)));
-  return minInterval + (startInterval - minInterval) * (1 - factor);
+function computeDropInterval(lvl) {
+  return Math.max(minInterval, startInterval - (lvl - 1) * 100);
 }
 
 function setDifficulty(level) {
@@ -516,6 +533,7 @@ function restartGame() {
   document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
   startTime = null;
   score = 0;
+  level = 1;
   nextSpecialTime = 30 + Math.random() * 15;
   updateScore();
   updateTime(0);
@@ -741,7 +759,7 @@ function update(timestamp) {
     spawnColumn(elapsed);
   }
 
-  const interval = computeDropInterval(elapsed);
+  const interval = computeDropInterval(level);
   fallProgress = Math.min((timestamp - lastDrop) / interval, 1);
   if (timestamp - lastDrop > interval) {
     if (currentColumn && canMoveDown()) {

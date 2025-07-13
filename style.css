@@ -89,6 +89,13 @@ body {
   pointer-events: none;
 }
 
+#level {
+  text-align: center;
+  font-family: 'Press Start 2P', cursive;
+  margin-bottom: 4px;
+  font-size: 1.2rem;
+}
+
 
 #touchControls {
   display: grid;
