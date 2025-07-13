@@ -105,11 +105,18 @@ body {
   pointer-events: none;
 }
 
-#level {
-  text-align: center;
-  font-family: 'Press Start 2P', cursive;
+#levelBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 4px;
+  font-family: 'Press Start 2P', cursive;
   font-size: 1.2rem;
+}
+
+#level,
+#scoreTop {
+  margin: 0 4px;
 }
 
 
