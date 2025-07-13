@@ -18,6 +18,7 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 - 🔃 Rotate order of fruit by pressing space before dropping
 - 🧠 Match-3 detection in **8 directions** (up, down, left, right, and diagonals)
 - 🍒 Gravity-based settling after clears
+- 📈 Score-based levels that increase falling speed
 - 💣 Bomb clears all fruit matching the one it lands on
 - 🔫 Gun clears all fruit to its right
 - 🏹 Arrow clears the diagonal toward the top-left
