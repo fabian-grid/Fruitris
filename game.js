@@ -2,6 +2,7 @@
 const gridElement = document.getElementById('grid');
 const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
+const scoreTopDisplay = document.getElementById('scoreTop');
 const gameOverDisplay = document.getElementById('gameOver');
 const levelDisplay = document.getElementById('level');
 const levelUpDisplay = document.getElementById('levelUp');
@@ -139,16 +140,39 @@ let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null))
 // base fruit set
 const baseFruits = ['🥥', '🍌', '🍇', '🍊', '🍏', '🍒'];
 let fruitTypes = baseFruits.slice(0, 4); // standard difficulty default
-const skullEmoji = '☠️';
-const specialTypes = ['💣', '🔫', '🏹', skullEmoji];
+const skullEmoji = '⛑️';
+const specialTypes = ['💣', '🔫', '🏹', skullEmoji, '💩', '🤡', '🔥', '❄️'];
 
 let nextSpecialTime = 30 + Math.random() * 15; // seconds until first special
 
+function availableSpecials() {
+  const list = ['💣', '🔫', '🏹', skullEmoji];
+  if (level > 2) list.push('💩');
+  if (level > 3) list.push('🤡');
+  if (level > 4) list.push('🔥');
+  if (level > 5) list.push('❄️');
+  return list;
+}
+
 function chooseSpecial() {
-  const skullChance = Math.min(0.2 + (level - 1) * 0.1, 0.8);
+  const specials = availableSpecials();
+  const skullChance = Math.min(0.3 + (level - 1) * 0.05, 0.8);
   if (Math.random() < skullChance) return skullEmoji;
-  const others = specialTypes.filter(s => s !== skullEmoji);
-  return others[Math.floor(Math.random() * others.length)];
+  const pool = specials.filter(s => s !== skullEmoji);
+  const weights = pool.map(s => {
+    if (s === '💩') return Math.max(1, level - 1);
+    if (s === '🤡') return Math.max(1, level - 2);
+    if (s === '🔥') return Math.max(1, level - 3);
+    if (s === '❄️') return Math.max(1, level - 4);
+    return 2;
+  });
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    if (r < weights[i]) return pool[i];
+    r -= weights[i];
+  }
+  return pool[0];
 }
 
 let currentColumn = null; // array of 3 fruits
@@ -164,6 +188,8 @@ let gameOver = false;
 let fallProgress = 0; // fraction between drops for smooth animation
 let prevColumnCells = [];
 const skullTimers = new Map();
+const poopTimers = new Map();
+const freezeTimers = new Map();
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
@@ -346,10 +372,10 @@ function applyGravity() {
 }
 
 function computeLevel(value) {
-  if (value < 100) return 1;
-  if (value < 250) return 2;
+  if (value < 50) return 1;
+  if (value < 125) return 2;
   let lvl = 3;
-  let threshold = 250;
+  let threshold = 125;
   while (value >= threshold * 2) {
     threshold *= 2;
     lvl++;
@@ -371,6 +397,7 @@ function updateLevel() {
 
 function updateScore() {
   scoreDisplay.textContent = `Score: ${score}`;
+  if (scoreTopDisplay) scoreTopDisplay.textContent = `Score: ${score}`;
   updateLevel();
 }
 
@@ -379,6 +406,7 @@ function bigClearCelebration(count) {
   const bonus = Math.floor((count / 3) * count);
   score += bonus;
   scoreDisplay.textContent = `Score: ${score}`;
+  if (scoreTopDisplay) scoreTopDisplay.textContent = `Score: ${score}`;
   updateLevel();
   scoreDisplay.classList.add('flash');
   setTimeout(() => {
@@ -398,6 +426,16 @@ function clearBoard() {
     clearTimeout(t[1]);
   });
   skullTimers.clear();
+  poopTimers.forEach(t => {
+    clearTimeout(t[0]);
+    clearTimeout(t[1]);
+  });
+  poopTimers.clear();
+  freezeTimers.forEach(t => {
+    clearTimeout(t[0]);
+    clearTimeout(t[1]);
+  });
+  freezeTimers.clear();
   document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
   renderGrid();
 }
@@ -411,7 +449,6 @@ function handleLevelUp() {
       levelUpDisplay.style.display = 'none';
     }, 1000);
   }
-  clearBoard();
 }
 
 function updateTime(elapsed) {
@@ -482,6 +519,119 @@ function scheduleSkull(x, y) {
     skullTimers.delete(key);
   }, 60000);
   skullTimers.set(key, [flashTimeout, removeTimeout]);
+}
+
+function schedulePoop(x, y) {
+  const key = `${x},${y}`;
+  const affected = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || nx >= gridWidth || ny < 0 || ny >= gridHeight) continue;
+      if (dx === 0 && dy === 0) continue;
+      const emoji = grid[ny][nx];
+      if (emoji && !specialTypes.includes(emoji)) {
+        affected.push({ x: nx, y: ny, emoji });
+        grid[ny][nx] = '💩';
+      }
+    }
+  }
+  grid[y][x] = '💩';
+  renderGrid();
+  const cells = [{ x, y }, ...affected];
+  const flashTimeout = setTimeout(() => {
+    cells.forEach(c => {
+      const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
+      if (el) el.classList.add('blink');
+    });
+  }, 50000);
+  const removeTimeout = setTimeout(() => {
+    cells.forEach(c => {
+      const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
+      if (el) el.classList.remove('blink');
+    });
+    if (grid[y][x] === '💩') grid[y][x] = null;
+    affected.forEach(({ x: ax, y: ay, emoji }) => {
+      if (grid[ay][ax] === '💩') grid[ay][ax] = emoji;
+    });
+    applyGravity();
+    renderGrid();
+    setTimeout(processMatches, 200);
+    poopTimers.delete(key);
+  }, 60000);
+  poopTimers.set(key, [flashTimeout, removeTimeout]);
+}
+
+function handleClown(x, y) {
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || nx >= gridWidth || ny < 0 || ny >= gridHeight) continue;
+      if (dx === 0 && dy === 0) continue;
+      if (grid[ny][nx] && !specialTypes.includes(grid[ny][nx])) {
+        let nf = randomFruit();
+        while (nf === grid[ny][nx]) nf = randomFruit();
+        grid[ny][nx] = nf;
+      }
+    }
+  }
+  let nf = randomFruit();
+  grid[y][x] = nf;
+  renderGrid();
+  setTimeout(processMatches, 200);
+}
+
+function handleFire(x, y) {
+  const cells = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || nx >= gridWidth || ny < 0 || ny >= gridHeight) continue;
+      if (grid[ny][nx] && !specialTypes.includes(grid[ny][nx])) {
+        cells.push({ x: nx, y: ny });
+      }
+    }
+  }
+  cells.push({ x, y });
+  cells.forEach(c => {
+    grid[c.y][c.x] = null;
+  });
+  applyGravity();
+  renderGrid();
+  setTimeout(processMatches, 200);
+}
+
+function scheduleFreeze(x, y) {
+  const key = `${x},${y}`;
+  const coords = [];
+  for (let yy = y; yy < gridHeight; yy++) {
+    for (let xx = 0; xx < gridWidth; xx++) {
+      coords.push({ x: xx, y: yy });
+      grid[yy][xx] = '🧊';
+    }
+  }
+  renderGrid();
+  const flashTimeout = setTimeout(() => {
+    coords.forEach(c => {
+      const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
+      if (el) el.classList.add('blink');
+    });
+  }, 50000);
+  const removeTimeout = setTimeout(() => {
+    coords.forEach(c => {
+      const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
+      if (el) el.classList.remove('blink');
+      if (grid[c.y][c.x] === '🧊') grid[c.y][c.x] = null;
+    });
+    applyGravity();
+    renderGrid();
+    setTimeout(processMatches, 200);
+    freezeTimers.delete(key);
+  }, 60000);
+  freezeTimers.set(key, [flashTimeout, removeTimeout]);
 }
 
 function handleSpecial(x, y, emoji) {
@@ -581,6 +731,16 @@ function restartGame() {
     clearTimeout(t[1]);
   });
   skullTimers.clear();
+  poopTimers.forEach(t => {
+    clearTimeout(t[0]);
+    clearTimeout(t[1]);
+  });
+  poopTimers.clear();
+  freezeTimers.forEach(t => {
+    clearTimeout(t[0]);
+    clearTimeout(t[1]);
+  });
+  freezeTimers.clear();
   document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
   startTime = null;
   score = 0;
@@ -790,13 +950,33 @@ function lockColumn() {
   } else {
     const cleared = [];
     specials.forEach(s => {
-      if (s.emoji === skullEmoji) {
-        scheduleSkull(s.x, s.y);
-      } else {
-        cleared.push(...handleSpecial(s.x, s.y, s.emoji));
+      switch (s.emoji) {
+        case skullEmoji:
+          scheduleSkull(s.x, s.y);
+          break;
+        case '💩':
+          schedulePoop(s.x, s.y);
+          break;
+        case '🤡':
+          handleClown(s.x, s.y);
+          break;
+        case '🔥':
+          handleFire(s.x, s.y);
+          break;
+        case '❄️':
+          scheduleFreeze(s.x, s.y);
+          break;
+        default:
+          cleared.push(...handleSpecial(s.x, s.y, s.emoji));
       }
     });
-    resolveSpecialClears(cleared);
+    if (cleared.length) {
+      resolveSpecialClears(cleared);
+    } else {
+      applyGravity();
+      renderGrid();
+      setTimeout(processMatches, 200);
+    }
   }
 }
 
