@@ -4,6 +4,7 @@ const timeDisplay = document.getElementById('time');
 const scoreDisplay = document.getElementById('score');
 const gameOverDisplay = document.getElementById('gameOver');
 const levelDisplay = document.getElementById('level');
+const levelUpDisplay = document.getElementById('levelUp');
 const touchControls = document.getElementById('touchControls');
 const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
 const restartButton = document.getElementById('restartButton');
@@ -105,6 +106,10 @@ function playBigClearSound() {
   playSequence({ waveforms: ['sawtooth', 'square'], notes: ['C5', 'E5', 'G5', 'C6'], duration: 0.6 });
 }
 
+function playSuccessSound() {
+  playSequence({ waveforms: ['square', 'triangle'], notes: ['C5', 'G5', 'C6'], duration: 0.45 });
+}
+
 
 function initAudio() {
   if (audioCtx.state === 'suspended') {
@@ -139,6 +144,13 @@ const specialTypes = ['💣', '🔫', '🏹', skullEmoji];
 
 let nextSpecialTime = 30 + Math.random() * 15; // seconds until first special
 
+function chooseSpecial() {
+  const skullChance = Math.min(0.2 + (level - 1) * 0.1, 0.8);
+  if (Math.random() < skullChance) return skullEmoji;
+  const others = specialTypes.filter(s => s !== skullEmoji);
+  return others[Math.floor(Math.random() * others.length)];
+}
+
 let currentColumn = null; // array of 3 fruits
 let columnX = 0;
 let columnY = 0; // top cell index of the falling column
@@ -165,8 +177,7 @@ function spawnColumn(elapsed = 0) {
   // insert special power if it's time
   if (elapsed >= nextSpecialTime) {
     const idx = Math.floor(Math.random() * 3);
-    const special = specialTypes[Math.floor(Math.random() * specialTypes.length)];
-    currentColumn[idx] = special;
+    currentColumn[idx] = chooseSpecial();
     scheduleNextSpecial(elapsed, computeDropInterval(level));
   }
   // keep using the previous column position
@@ -341,8 +352,15 @@ function computeLevel(value) {
 }
 
 function updateLevel() {
-  level = computeLevel(score);
-  levelDisplay.textContent = `Level ${level}`;
+  const newLevel = computeLevel(score);
+  if (newLevel > level) {
+    level = newLevel;
+    levelDisplay.textContent = `Level ${level}`;
+    handleLevelUp();
+  } else {
+    level = newLevel;
+    levelDisplay.textContent = `Level ${level}`;
+  }
 }
 
 function updateScore() {
@@ -361,6 +379,33 @@ function bigClearCelebration(count) {
     scoreDisplay.classList.remove('flash');
   }, 600);
   playBigClearSound();
+}
+
+function clearBoard() {
+  grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null));
+  currentColumn = null;
+  columnX = 0;
+  columnY = 0;
+  isClearing = false;
+  skullTimers.forEach(t => {
+    clearTimeout(t[0]);
+    clearTimeout(t[1]);
+  });
+  skullTimers.clear();
+  document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
+  renderGrid();
+}
+
+function handleLevelUp() {
+  playSuccessSound();
+  if (levelUpDisplay) {
+    levelUpDisplay.textContent = `Level ${level}`;
+    levelUpDisplay.style.display = 'block';
+    setTimeout(() => {
+      levelUpDisplay.style.display = 'none';
+    }, 1000);
+  }
+  clearBoard();
 }
 
 function updateTime(elapsed) {
@@ -539,6 +584,7 @@ function restartGame() {
   updateTime(0);
   gameOver = false;
   gameOverDisplay.style.display = 'none';
+  if (levelUpDisplay) levelUpDisplay.style.display = 'none';
   const selected = document.querySelector('input[name="difficulty"]:checked');
   if (selected) setDifficulty(selected.value);
   spawnColumn(0);
