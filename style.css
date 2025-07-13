@@ -141,6 +141,10 @@ body {
   animation: flash 0.3s ease-in-out 0s 2;
 }
 
+.cell.blink {
+  animation: flash 0.5s linear infinite;
+}
+
 
 @media (max-width: 480px) {
   :root {

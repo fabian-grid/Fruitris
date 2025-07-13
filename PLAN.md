@@ -41,7 +41,7 @@ This document outlines the planned phases and tasks for building **Fruitris**, a
 
 - [x] Apply gravity to fruits above cleared cells
 - [x] Re-check for new matches (chain reactions)
-- [ ] Add special power emoji (💣 = clear all emoji on screen below bomb; 🏹 = clear all emoji in column; 🗡️ clear all emoji in row)
+- [ ] Add special power emoji (💣 = clear all emoji on screen below bomb; 🏹 = clear all emoji in column; 🗡️ clear all emoji in row; ☠️ lingers for 1 minute)
 - [ ] Update score per emoji cleared and chain multiplier
 
 —

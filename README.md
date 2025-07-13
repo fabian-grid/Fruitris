@@ -21,6 +21,7 @@ The game ends when the stacked fruit reaches the top of the playfield and can no
 - 💣 Bomb clears all fruit matching the one it lands on
 - 🔫 Gun clears all fruit to its right
 - 🏹 Arrow clears the diagonal toward the top-left
+- ☠️ Skull blocks a cell for 1 minute, flashing before it disappears
 - ☄️ Extra bonus and meteor celebration when clearing more than six fruits at once
 - 🍊 Combo chaining for advanced play
 - 🍏 Game over detection and restart flow
