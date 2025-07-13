@@ -133,7 +133,8 @@ let grid = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(null))
 // base fruit set
 const baseFruits = ['🥥', '🍌', '🍇', '🍊', '🍏', '🍒'];
 let fruitTypes = baseFruits.slice(0, 4); // standard difficulty default
-const specialTypes = ['💣', '🔫', '🏹'];
+const skullEmoji = '☠️';
+const specialTypes = ['💣', '🔫', '🏹', skullEmoji];
 
 let nextSpecialTime = 30 + Math.random() * 15; // seconds until first special
 
@@ -147,6 +148,7 @@ let startTime = null;
 let score = 0;
 let gameOver = false;
 let fallProgress = 0; // fraction between drops for smooth animation
+const skullTimers = new Map();
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
@@ -267,7 +269,7 @@ function findMatches() {
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
       const fruit = grid[y][x];
-      if (!fruit) continue;
+      if (!fruit || fruit === skullEmoji) continue;
 
       for (const [dx, dy] of dirs) {
         const prevX = x - dx;
@@ -335,11 +337,10 @@ function bigClearCelebration(count) {
   // award additional bonus points for large clears
   const bonus = Math.floor((count / 3) * count);
   score += bonus;
-  scoreDisplay.textContent = `Score: ${score} ☄️`;
+  scoreDisplay.textContent = `Score: ${score}`;
   scoreDisplay.classList.add('flash');
   setTimeout(() => {
     scoreDisplay.classList.remove('flash');
-    scoreDisplay.textContent = `Score: ${score}`;
   }, 600);
   playBigClearSound();
 }
@@ -396,6 +397,25 @@ function scheduleNextSpecial(elapsed, dropInterval) {
   nextSpecialTime = elapsed + interval;
 }
 
+function scheduleSkull(x, y) {
+  const key = `${x},${y}`;
+  const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+  const flashTimeout = setTimeout(() => {
+    if (cell) cell.classList.add('blink');
+  }, 50000);
+  const removeTimeout = setTimeout(() => {
+    if (cell) cell.classList.remove('blink');
+    if (grid[y][x] === skullEmoji) {
+      grid[y][x] = null;
+      applyGravity();
+      renderGrid();
+      setTimeout(processMatches, 200);
+    }
+    skullTimers.delete(key);
+  }, 60000);
+  skullTimers.set(key, [flashTimeout, removeTimeout]);
+}
+
 function handleSpecial(x, y, emoji) {
   const cells = [];
   if (emoji === '💣') {
@@ -416,18 +436,18 @@ function handleSpecial(x, y, emoji) {
   } else if (emoji === '🔫') {
     // Gun now fires to the left instead of the right
     for (let xx = x - 1; xx >= 0; xx--) {
-      if (grid[y][xx]) cells.push({ x: xx, y });
+      if (grid[y][xx] && grid[y][xx] !== skullEmoji) cells.push({ x: xx, y });
     }
   } else if (emoji === '🏹') {
     let sx = x + 1;
     let sy = y - 1;
     while (sx < gridWidth && sy >= 0) {
-      if (grid[sy][sx]) cells.push({ x: sx, y: sy });
+      if (grid[sy][sx] && grid[sy][sx] !== skullEmoji) cells.push({ x: sx, y: sy });
       sx++;
       sy--;
     }
   }
-  cells.push({ x, y });
+  if (emoji !== skullEmoji) cells.push({ x, y });
   return cells;
 }
 
@@ -450,8 +470,9 @@ function resolveSpecialClears(cells) {
   });
 
   isClearing = true;
+  const clearEmoji = unique.length > 6 ? '☄️' : '💥';
   unique.forEach(({ x, y }) => {
-    grid[y][x] = '💥';
+    grid[y][x] = clearEmoji;
   });
   renderGrid();
 
@@ -487,6 +508,12 @@ function restartGame() {
   columnX = 0;
   columnY = 0;
   isClearing = false;
+  skullTimers.forEach(t => {
+    clearTimeout(t[0]);
+    clearTimeout(t[1]);
+  });
+  skullTimers.clear();
+  document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
   startTime = null;
   score = 0;
   nextSpecialTime = 30 + Math.random() * 15;
@@ -510,8 +537,9 @@ function processMatches() {
 
   isClearing = true;
   console.log('Match found:', matches.length, 'cells');
+  const clearEmoji = matches.length > 6 ? '☄️' : '💥';
   matches.forEach(({ x, y }) => {
-    grid[y][x] = '💥';
+    grid[y][x] = clearEmoji;
   });
   renderGrid();
 
@@ -692,7 +720,11 @@ function lockColumn() {
   } else {
     const cleared = [];
     specials.forEach(s => {
-      cleared.push(...handleSpecial(s.x, s.y, s.emoji));
+      if (s.emoji === skullEmoji) {
+        scheduleSkull(s.x, s.y);
+      } else {
+        cleared.push(...handleSpecial(s.x, s.y, s.emoji));
+      }
     });
     resolveSpecialClears(cleared);
   }
