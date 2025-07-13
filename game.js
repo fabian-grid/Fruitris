@@ -354,12 +354,11 @@ function bigClearCelebration(count) {
   // award additional bonus points for large clears
   const bonus = Math.floor((count / 3) * count);
   score += bonus;
-  scoreDisplay.textContent = `Score: ${score} ☄️`;
+  scoreDisplay.textContent = `Score: ${score}`;
   updateLevel();
   scoreDisplay.classList.add('flash');
   setTimeout(() => {
     scoreDisplay.classList.remove('flash');
-    scoreDisplay.textContent = `Score: ${score}`;
   }, 600);
   playBigClearSound();
 }
@@ -488,8 +487,9 @@ function resolveSpecialClears(cells) {
   });
 
   isClearing = true;
+  const clearEmoji = unique.length > 6 ? '☄️' : '💥';
   unique.forEach(({ x, y }) => {
-    grid[y][x] = '💥';
+    grid[y][x] = clearEmoji;
   });
   renderGrid();
 
@@ -555,8 +555,9 @@ function processMatches() {
 
   isClearing = true;
   console.log('Match found:', matches.length, 'cells');
+  const clearEmoji = matches.length > 6 ? '☄️' : '💥';
   matches.forEach(({ x, y }) => {
-    grid[y][x] = '💥';
+    grid[y][x] = clearEmoji;
   });
   renderGrid();
 
