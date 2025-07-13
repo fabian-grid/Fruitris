@@ -162,6 +162,7 @@ let score = 0;
 let level = 1;
 let gameOver = false;
 let fallProgress = 0; // fraction between drops for smooth animation
+let prevColumnCells = [];
 const skullTimers = new Map();
 
 const startInterval = 1000; // ms
@@ -207,10 +208,12 @@ function updateCell(x, y, emoji) {
 }
 
 function renderGrid() {
-  // reset transforms on all cells
-  document.querySelectorAll('.cell').forEach(c => {
-    c.style.transform = '';
+  // clear previous column transforms
+  prevColumnCells.forEach(({ x, y }) => {
+    const c = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+    if (c) c.style.transform = '';
   });
+  prevColumnCells = [];
 
   const cellSize = parseInt(
     getComputedStyle(document.documentElement).getPropertyValue('--cell-size')
@@ -230,7 +233,10 @@ function renderGrid() {
         const cell = document.querySelector(
           `.cell[data-x="${columnX}"][data-y="${y}"]`
         );
-        if (cell) cell.style.transform = `translateY(${offset}px)`;
+        if (cell) {
+          cell.style.transform = `translateY(${offset}px)`;
+          prevColumnCells.push({ x: columnX, y });
+        }
       }
     }
   }
