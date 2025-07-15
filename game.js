@@ -176,6 +176,21 @@ function chooseSpecial() {
   return pool[0];
 }
 
+function specialForLevel(lvl) {
+  switch (lvl) {
+    case 3:
+      return '💩';
+    case 4:
+      return '🤡';
+    case 5:
+      return '🔥';
+    case 6:
+      return '❄️';
+    default:
+      return null;
+  }
+}
+
 let currentColumn = null; // array of 3 fruits
 let columnX = 0;
 let columnY = 0; // top cell index of the falling column
@@ -193,6 +208,10 @@ const poopTimers = new Set();
 const freezeTimers = new Set();
 const poopCells = new Map();
 const freezeCells = new Map();
+let elapsedTime = 0; // seconds since game start
+let levelStartTime = 0; // timestamp when current level began
+let pendingSpecial = null; // special emoji to force spawn
+let specialDueTime = Infinity; // absolute time when pendingSpecial must appear
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
@@ -204,10 +223,22 @@ function randomFruit() {
 
 function spawnColumn(elapsed = 0) {
   currentColumn = [randomFruit(), randomFruit(), randomFruit()];
+  let inserted = false;
   // insert special power if it's time
   if (elapsed >= nextSpecialTime) {
     const idx = Math.floor(Math.random() * 3);
-    currentColumn[idx] = chooseSpecial();
+    const chosen = chooseSpecial();
+    currentColumn[idx] = chosen;
+    if (pendingSpecial && chosen === pendingSpecial) {
+      pendingSpecial = null;
+    }
+    scheduleNextSpecial(elapsed, computeDropInterval(level));
+    inserted = true;
+  }
+  if (!inserted && pendingSpecial && elapsed >= specialDueTime) {
+    const idx = Math.floor(Math.random() * 3);
+    currentColumn[idx] = pendingSpecial;
+    pendingSpecial = null;
     scheduleNextSpecial(elapsed, computeDropInterval(level));
   }
   // keep using the previous column position
@@ -415,6 +446,15 @@ function updateLevel() {
     level = newLevel;
     levelDisplay.textContent = `Level ${level}`;
     handleLevelUp();
+    levelStartTime = elapsedTime;
+    const special = specialForLevel(level);
+    if (special) {
+      pendingSpecial = special;
+      specialDueTime = levelStartTime + 45;
+      if (nextSpecialTime > specialDueTime) {
+        nextSpecialTime = specialDueTime;
+      }
+    }
   } else {
     level = newLevel;
     levelDisplay.textContent = `Level ${level}`;
@@ -781,6 +821,10 @@ function restartGame() {
   startTime = null;
   score = 0;
   level = 1;
+  elapsedTime = 0;
+  levelStartTime = 0;
+  pendingSpecial = null;
+  specialDueTime = Infinity;
   nextSpecialTime = 30 + Math.random() * 15;
   updateScore();
   updateTime(0);
@@ -1022,7 +1066,15 @@ function update(timestamp) {
   if (gameOver) return;
 
   const elapsed = (timestamp - startTime) / 1000;
+  elapsedTime = elapsed;
   updateTime(elapsed);
+
+  if (pendingSpecial && elapsedTime >= specialDueTime && currentColumn) {
+    const idx = Math.floor(Math.random() * 3);
+    currentColumn[idx] = pendingSpecial;
+    pendingSpecial = null;
+    scheduleNextSpecial(elapsedTime, computeDropInterval(level));
+  }
 
   if (!currentColumn && !isClearing) {
     spawnColumn(elapsed);
