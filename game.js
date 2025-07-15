@@ -142,6 +142,7 @@ const baseFruits = ['🥥', '🍌', '🍇', '🍊', '🍏', '🍒'];
 let fruitTypes = baseFruits.slice(0, 4); // standard difficulty default
 const skullEmoji = '⛑️';
 const specialTypes = ['💣', '🔫', '🏹', skullEmoji, '💩', '🤡', '🔥', '❄️'];
+const persistentTypes = new Set(["💩", "❄️", "🧊"]);
 
 let nextSpecialTime = 30 + Math.random() * 15; // seconds until first special
 
@@ -188,8 +189,10 @@ let gameOver = false;
 let fallProgress = 0; // fraction between drops for smooth animation
 let prevColumnCells = [];
 const skullTimers = new Map();
-const poopTimers = new Map();
-const freezeTimers = new Map();
+const poopTimers = new Set();
+const freezeTimers = new Set();
+const poopCells = new Map();
+const freezeCells = new Map();
 
 const startInterval = 1000; // ms
 const minInterval = 100; // ms
@@ -311,7 +314,7 @@ function findMatches() {
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
       const fruit = grid[y][x];
-      if (!fruit || fruit === skullEmoji) continue;
+      if (!fruit || fruit === skullEmoji || persistentTypes.has(fruit)) continue;
 
       for (const [dx, dy] of dirs) {
         const prevX = x - dx;
@@ -365,11 +368,34 @@ function applyGravity() {
         if (above >= 0) {
           grid[y][x] = grid[above][x];
           grid[above][x] = null;
+          const moved = grid[y][x];
+          if (persistentTypes.has(moved)) {
+            updateSpecialPosition(x, above, x, y);
+          }
         }
       }
     }
   }
 }
+function updateSpecialPosition(oldX, oldY, newX, newY) {
+  const oldKey = `${oldX},${oldY}`;
+  const newKey = `${newX},${newY}`;
+  if (poopCells.has(oldKey)) {
+    const cell = poopCells.get(oldKey);
+    poopCells.delete(oldKey);
+    cell.x = newX;
+    cell.y = newY;
+    poopCells.set(newKey, cell);
+  }
+  if (freezeCells.has(oldKey)) {
+    const cell = freezeCells.get(oldKey);
+    freezeCells.delete(oldKey);
+    cell.x = newX;
+    cell.y = newY;
+    freezeCells.set(newKey, cell);
+  }
+}
+
 
 function computeLevel(value) {
   if (value < 50) return 1;
@@ -427,15 +453,17 @@ function clearBoard() {
   });
   skullTimers.clear();
   poopTimers.forEach(t => {
-    clearTimeout(t[0]);
-    clearTimeout(t[1]);
+    clearTimeout(t.flashTimeout);
+    clearTimeout(t.removeTimeout);
   });
   poopTimers.clear();
+  poopCells.clear();
   freezeTimers.forEach(t => {
-    clearTimeout(t[0]);
-    clearTimeout(t[1]);
+    clearTimeout(t.flashTimeout);
+    clearTimeout(t.removeTimeout);
   });
   freezeTimers.clear();
+  freezeCells.clear();
   document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
   renderGrid();
 }
@@ -472,7 +500,7 @@ function setDifficulty(level) {
 }
 
 function cleanDisallowedFruits() {
-  const allowed = new Set([...fruitTypes, ...specialTypes]);
+  const allowed = new Set([...fruitTypes, ...specialTypes, ...persistentTypes]);
   let changed = false;
   for (let y = 0; y < gridHeight; y++) {
     for (let x = 0; x < gridWidth; x++) {
@@ -522,7 +550,6 @@ function scheduleSkull(x, y) {
 }
 
 function schedulePoop(x, y) {
-  const key = `${x},${y}`;
   const affected = [];
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
@@ -532,35 +559,39 @@ function schedulePoop(x, y) {
       if (dx === 0 && dy === 0) continue;
       const emoji = grid[ny][nx];
       if (emoji && !specialTypes.includes(emoji)) {
-        affected.push({ x: nx, y: ny, emoji });
+        const cell = { x: nx, y: ny, original: emoji };
+        affected.push(cell);
+        poopCells.set(`${nx},${ny}`, cell);
         grid[ny][nx] = '💩';
       }
     }
   }
+  const center = { x, y, original: null };
+  poopCells.set(`${x},${y}`, center);
   grid[y][x] = '💩';
   renderGrid();
-  const cells = [{ x, y }, ...affected];
-  const flashTimeout = setTimeout(() => {
-    cells.forEach(c => {
+  const event = { cells: [center, ...affected] };
+  event.flashTimeout = setTimeout(() => {
+    event.cells.forEach(c => {
       const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
       if (el) el.classList.add('blink');
     });
   }, 50000);
-  const removeTimeout = setTimeout(() => {
-    cells.forEach(c => {
+  event.removeTimeout = setTimeout(() => {
+    event.cells.forEach(c => {
       const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
       if (el) el.classList.remove('blink');
-    });
-    if (grid[y][x] === '💩') grid[y][x] = null;
-    affected.forEach(({ x: ax, y: ay, emoji }) => {
-      if (grid[ay][ax] === '💩') grid[ay][ax] = emoji;
+      if (grid[c.y][c.x] === '💩') {
+        grid[c.y][c.x] = c.original;
+      }
+      poopCells.delete(`${c.x},${c.y}`);
     });
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
-    poopTimers.delete(key);
+    poopTimers.delete(event);
   }, 60000);
-  poopTimers.set(key, [flashTimeout, removeTimeout]);
+  poopTimers.add(event);
 }
 
 function handleClown(x, y) {
@@ -605,33 +636,36 @@ function handleFire(x, y) {
 }
 
 function scheduleFreeze(x, y) {
-  const key = `${x},${y}`;
-  const coords = [];
+  const cells = [];
   for (let yy = y; yy < gridHeight; yy++) {
     for (let xx = 0; xx < gridWidth; xx++) {
-      coords.push({ x: xx, y: yy });
+      const cell = { x: xx, y: yy };
+      cells.push(cell);
+      freezeCells.set(`${xx},${yy}`, cell);
       grid[yy][xx] = '🧊';
     }
   }
   renderGrid();
-  const flashTimeout = setTimeout(() => {
-    coords.forEach(c => {
+  const event = { cells };
+  event.flashTimeout = setTimeout(() => {
+    event.cells.forEach(c => {
       const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
       if (el) el.classList.add('blink');
     });
   }, 50000);
-  const removeTimeout = setTimeout(() => {
-    coords.forEach(c => {
+  event.removeTimeout = setTimeout(() => {
+    event.cells.forEach(c => {
       const el = document.querySelector(`.cell[data-x="${c.x}"][data-y="${c.y}"]`);
       if (el) el.classList.remove('blink');
       if (grid[c.y][c.x] === '🧊') grid[c.y][c.x] = null;
+      freezeCells.delete(`${c.x},${c.y}`);
     });
     applyGravity();
     renderGrid();
     setTimeout(processMatches, 200);
-    freezeTimers.delete(key);
+    freezeTimers.delete(event);
   }, 60000);
-  freezeTimers.set(key, [flashTimeout, removeTimeout]);
+  freezeTimers.add(event);
 }
 
 function handleSpecial(x, y, emoji) {
@@ -732,15 +766,17 @@ function restartGame() {
   });
   skullTimers.clear();
   poopTimers.forEach(t => {
-    clearTimeout(t[0]);
-    clearTimeout(t[1]);
+    clearTimeout(t.flashTimeout);
+    clearTimeout(t.removeTimeout);
   });
   poopTimers.clear();
+  poopCells.clear();
   freezeTimers.forEach(t => {
-    clearTimeout(t[0]);
-    clearTimeout(t[1]);
+    clearTimeout(t.flashTimeout);
+    clearTimeout(t.removeTimeout);
   });
   freezeTimers.clear();
+  freezeCells.clear();
   document.querySelectorAll('.cell.blink').forEach(c => c.classList.remove('blink'));
   startTime = null;
   score = 0;
@@ -760,24 +796,25 @@ function restartGame() {
 
 function processMatches() {
   const matches = findMatches();
-  if (matches.length === 0) {
+  const validMatches = matches.filter(m => !persistentTypes.has(grid[m.y][m.x]));
+  if (validMatches.length === 0) {
     isClearing = false;
     return;
   }
 
   isClearing = true;
-  console.log('Match found:', matches.length, 'cells');
-  const clearEmoji = matches.length > 6 ? '☄️' : '💥';
-  matches.forEach(({ x, y }) => {
+  console.log('Match found:', validMatches.length, 'cells');
+  const clearEmoji = validMatches.length > 6 ? '☄️' : '💥';
+  validMatches.forEach(({ x, y }) => {
     grid[y][x] = clearEmoji;
   });
   renderGrid();
 
   setTimeout(() => {
-    matches.forEach(({ x, y }) => {
+    validMatches.forEach(({ x, y }) => {
       grid[y][x] = null;
     });
-    const matchedCount = matches.length;
+    const matchedCount = validMatches.length;
     const basePoints = Math.floor((matchedCount / 3) * matchedCount);
     score += basePoints;
     updateScore();
